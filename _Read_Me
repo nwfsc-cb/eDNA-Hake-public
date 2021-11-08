@@ -1,0 +1,3 @@
+_READ_ME
+
+This repository supports the publication, "Environmental DNA provides quantitative estimates of Pacific hake abundance and distribution in the open ocean" by Shelton et al. It contains raw data, scripts for processing that data, code for estimating statistical models from that data, and code for post-processing those model fits.
