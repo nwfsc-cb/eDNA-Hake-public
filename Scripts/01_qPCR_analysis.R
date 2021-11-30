@@ -391,29 +391,6 @@ B <- dat.few %>% group_by(sample,dilution) %>%
 C <- B %>% dplyr::select(-N) %>% ungroup() %>% pivot_wider(.,names_from = c("dilution"),values_from = "count") %>% as.data.frame()
 colnames(C)[2:5] <- c("x1","x.1","x.2","x.5")
 
-# p.1 <- ggplot(C) +
-#   geom_point(aes(x=x.1,y=x.2),alpha=0.5) +
-#   geom_abline(intercept=c(0,0),slope = c(2,1),color="red",linetype=c("solid","dashed")) +
-#   xlab("DNA copies/ul at 1:10 dilution") +
-#   ylab("DNA copies/ul at 1:5 dilution")
-# 
-# p.2 <- ggplot(C) +
-#   geom_point(aes(x=x.1,y=x.5),alpha=0.5) +
-#   geom_abline(intercept=c(0,0),slope = c(5,1),color="red",linetype=c("solid","dashed")) +
-#   xlab("DNA copies/ul at 1:10 dilution") +
-#   ylab("DNA copies/ul at 1:2 dilution") #+
-#   # xlim(c(0,120)) +
-#   # ylim(c(0,120))
-# 
-# p.3 <- ggplot(C) +
-#   geom_point(aes(x=x.2,y=x.5),alpha=0.5) +
-#   geom_abline(intercept=c(0,0),slope = c(2.5,1),color="red",linetype=c("solid","dashed")) +
-#   xlab("DNA copies/ul at 1:5 dilution") +
-#   ylab("DNA copies/ul at 1:2 dilution") # +
-#   # xlim(c(0,160)) +
-#   # ylim(c(0,160))
-# 
-# dilution_plot <- grid.arrange(p.1,p.2,p.3,nrow=2)
 
 # This strongly suggests that the 0.5 dilution did not work all that well (lower copies than expected)
 # So if we exclude all of the 0.5 and inspect the results
@@ -425,7 +402,7 @@ if(SP == "hake"){ # ONLY KEEP 0.2 for hake
 
 B <- dat.samp %>% group_by(qPCR,dilution) %>% summarise(N=length(dilution))  %>% as.data.frame()
 
-########## CHECK ON HOW MANY SAMPLES WE HAVE ZERO REPLICATES FOR  
+########## CHECK ON HOW MANY SAMPLES WE HAVE ZERO REPLICATES
 # Examine how many samples are retained out of the intial number done.
 dat.samp.ok <- dat.samp %>% group_by(sample,inhibit.bin) %>% summarise(N=length(sample)) %>% as.data.frame()
 
@@ -960,20 +937,6 @@ if(MODEL.TYPE=="lat.long.smooth"){
                                    N_control_sample = N_control_sample)
     )
     }
-    if(NO.SURFACE=="TRUE"){
-      stanMod = stan(file = "qPCR_Hake_smoothes_no_surf.stan" ,data = stan_data, 
-                     verbose = FALSE, chains = N_CHAIN, thin = 4, 
-                     warmup = Warm, iter = Warm + Iter, 
-                     control = list(max_treedepth=Treedepth,adapt_delta=Adapt_delta,metric="diag_e"),
-                     pars = stan_pars,
-                     boost_lib = NULL,
-                     sample_file = paste0("./Output files/",MODEL.TYPE,"_",MODEL.ID,"_",MODEL.VAR,".csv"),
-                     init = stan_init_f2(n.chain=N_CHAIN,
-                                         N_pcr= N_pcr,
-                                         N_station_depth = N_station_depth,
-                                         N_control_sample = N_control_sample)
-      )
-    }
   }
 }
 
@@ -1208,7 +1171,6 @@ Output.qpcr <- list(
                     # pred_pos = pred_pos
                     )
 
-base.dir <- "/Users/ole.shelton/Github/eDNA-Hake/"
 setwd(base.dir)
 setwd("./Stan Model Fits/")
 save(Output.qpcr,file=paste("qPCR 2019",SP,MODEL.TYPE,MODEL.ID,MODEL.VAR,"Fitted NO.SURFACE=",NO.SURFACE,".RData"))
