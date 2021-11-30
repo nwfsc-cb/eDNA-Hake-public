@@ -41,7 +41,7 @@ N.knots.bd <- 5
 N.knots.depth <- 4
 
 # Working directories
-base.dir <- "/Users/ole.shelton/Github/eDNA-Hake-public/"
+base.dir <- getwd()
 data.dir <- paste0(base.dir,"Data")
 plot.dir <- paste0(base.dir,"Plots and figures")
 script.dir <- paste0(base.dir,"Scripts")

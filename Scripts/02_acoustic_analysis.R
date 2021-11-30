@@ -17,7 +17,7 @@ library(loo)
 ## 
 
 # Working directories
-base.dir <- "/Users/ole.shelton/Github/eDNA-Hake/"
+base.dir <- getwd()
 data.dir <- paste0(base.dir,"Data/acoustics 2019")
 script.dir <- paste0(base.dir,"/Scripts")
 plot.dir <- paste0(base.dir,"Plots and figures")
@@ -125,45 +125,9 @@ N_obs_pos <- sum(dat.acoustic.bin$bin_weight_dens)
 
 dat.acoustic.pos  <- dat.acoustic.bin[1:N_obs_pos,]
 
-
-#ggplot(dat.acoustic) + geom_point(aes(x=lon,y=lat,color=bathy.bottom.depth),alpha=0.25) +theme_bw()
 ###################################################################
-
 ### Go get the projected points for the coast from Blake's data
 dat_raster_fin <- readRDS(file="../Data/_projection_rds/dat_raster_fin.rds")   
-
-# Information from Chu on detection thresholds.
-
-#  Email string from April 12,2021.
-# Chu says:
-#   In exporting the NASC from echoview, we set a threshold of Sv = -70 dB (RT - correct me if I am wrong), 
-#   the resultant minimum NASC_min = 4*pi*1852^2*H*10^(-70/10) = 43.1 m^2/nmi^2 with H=10 m. 
-#   here is an approximate estimate of minimum value of biomass density:
-#   1) for adult hake, say 40-cm long: TS = 35.96 dB, sA = 4*pi*10^(TS/10) = 0.032  m^2
-#   2) the biomass of the average hake of 40-cm is  wgt_sngle_hake40 = 0.45 kg
-#   3) the minimum aerial biomass density =  NASC_min/sA*wgt_single_hake40 = 606 kg/nmi^2
-#   
-#   So the value of 606 kg/nmi^2 is the roughly estimated threshold of aerial biomass density.
-#   
-#   Rebecca.Thomas - NOAA Federal
-#   Chu-
-#     Interesting, I had never thought about it this way before. However, our threshold is -69 dB, not -70.  
-#     Close :-)  I guess if you want to get technical, you could run to the calculation again with -69.
-# 
-#     I see what you are saying Chu, that the smallest number we could produce would be ~606 kg per nautical mile squared. 
-#     I think in reality our cut off would be significantly higher than that, but since it would be difficult 
-#     to put a number on what is essentially a subjective process, your number is probably the best one we can produce. 
-#     At the scales you're talking about, we are just as likely to have false positives as well as real positives.  
-#     Some of the zeros that we have almost certainly have hake in them, but we don't know when they would, of course.
-# 
-#   RT
-# 
-#   Hi RT,
-# 
-#   Thank RT for correcting me on the export threshold, i.e.  -69 dB instead of -17 dB.  
-#   Using the same calculation in my previous email, this 1 dB difference will result in 10^0.1 = 1.2589 time difference in biomass estimate, 
-#   i.e. the minimum aerial biomass density =  NASC_min/sA*wgt_single_hake40 = 1.2589*606 kg/nmi^2 = 763  kg/nmi^2
-#   
 
 #### Here are some data plots..
 setwd(script.dir)
@@ -185,7 +149,6 @@ base_map_trim +
   scale_color_viridis_c()
 
 
-
 # Plot on log scale
 ggplot(dat.acoustic %>% filter(transect<40)) +
   geom_point(aes(x=utm.lon,y=log(weight_dens_mt_km2)))+
@@ -196,10 +159,6 @@ ggplot(dat.acoustic.trim %>% filter(transect<40)) +
   geom_point(aes(x=utm.lon,y=log(weight_dens_mt_km2)))+
   facet_wrap(~transect,scales="free_x") +
   theme_bw()
-
-
-
-
 
 # Plot on identity scale
 ggplot(dat.acoustic %>% filter(transect<40)) +
@@ -215,23 +174,6 @@ ggplot(dat.acoustic.trim %>% filter(transect<40)) +
 ##################################
 thresh_mt_km2 <- 0.763 / 3.43429 # This is the threshold determined from emails pasted above.
 prob_val      <- 0.99  # This is the probability of observing presence at the threshold.
-
-# cloglog calculations.
-phi0 <- log(-log(1-0.99))
-phi1 <- 2
-
-x <- seq(-5,5,length.out=1000)
-y <- 1- exp(-exp(phi0+phi1*x))
-plot(y~x)
-
-# Look at intecept with cloglog
-phi_0_mean <- log(-log(1-prob_val))  
-phi_0_fix <- phi_0_mean
-phi_0_sd   <- 0.1
-phi_0_rand <- rnorm(1e6,phi_0_mean,phi_0_sd)
-test<-1- exp(-exp(phi_0_rand))
-hist(test,breaks=1000)
-mean(test)
 
 # priors for phi_1 (normal prior)
 phi_1_mean <- 20
@@ -256,7 +198,6 @@ abline(h=prob_val,v=offset,col=2)
 # Look at intecept with logit
 phi_0_mean <- -log(1/prob_val - 1)
 phi_0_fix  <- phi_0_mean
-
 
 ###################################################################
 ###################################################################
@@ -306,11 +247,7 @@ if(MODEL.TYPE == "lat.long.smooth"){
   #          knots=list(bottom.depth = knots.bd),
   #          data=Q,
   #          chains=0)
-  
-  # brms.object <- 
-  # smooth.datC <- standata(C)
-  # code.datC   <- stancode(C)
-}
+  }
 
 if(MODEL.TYPE == "lat.long.smooth.base"){
   # THis is a new version.  Derive basis function set up from the positive observations, make a second set of 
@@ -362,13 +299,8 @@ if(MODEL.TYPE == "lat.long.smooth.base"){
   #          data=Q,
   #          chains=0)
   # 
-  # brms.object.bin <-
-  # smooth.datC <- standata(C)
-  # code.datC   <- stancode(C)
+  
 }
-
-
-
 
 
 #################################################################### 
@@ -398,8 +330,8 @@ stan_data = list(
   "knots_1_pos" = smooth.dat.pos$knots_1, # number of knots
   "nb_1_bin" = smooth.dat.bin$nb_1,  # number of bases
   "knots_1_bin" = smooth.dat.bin$knots_1, # number of knots
-  "nb_2" = smooth.dat.bin$nb_2,
-  "knots_2" = smooth.dat.bin$knots_2,
+  # "nb_2" = smooth.dat.bin$nb_2,
+  # "knots_2" = smooth.dat.bin$knots_2,
   
   # basis function matrices
   "Zs_1_1_pos" = smooth.dat.pos$Zs_1_1,
@@ -411,11 +343,7 @@ stan_data = list(
   "Zs_1_2_bin" = smooth.dat.bin$Zs_1_2,
   "Zs_1_3_bin" = smooth.dat.bin$Zs_1_3,
   "Zs_2_1_bin" = smooth.dat.bin$Zs_2_1,
-  
-  "thresh_mt_km2" = thresh_mt_km2, # This is the offset to make the phi_0 be the parameter 
-                             # define the probability of observing
-                             # positive kg km^-2 at bin_offset kg km^-2
-  
+
   # Priors for cloglog parameters
   "phi_0_fix" = phi_0_fix,
   "phi_0_mean" = phi_0_mean,
@@ -427,8 +355,8 @@ stan_data = list(
 if(MODEL.TYPE == "lat.long.smooth"){
   stan_data = c(stan_data,
                 list(# data for spline s(bottom.depth,k=N.knots.bd)
-                  "nb_2"= smooth.dat$nb_2,  # number of bases
-                  "knots_2"= smooth.dat$knots_2,  # number of knots
+                  "nb_2"= smooth.dat.bin$nb_2,  # number of bases
+                  "knots_2"= smooth.dat.bin$knots_2,  # number of knots
                   # basis function matrices
                   "Zs_2_1_pos"= smooth.dat.pos$Zs_2_1,
                   "Zs_2_1_bin"= smooth.dat.bin$Zs_2_1))
@@ -528,10 +456,7 @@ if(MODEL.TYPE=="lat.long.smooth"){
                  boost_lib = NULL,
                  sample_file = paste0("./Output files/",MODEL.TYPE,"_",MODEL.ID,"_Acoustics.csv"),
                  init = stan_init_f2(n.chain=N_CHAIN)
-                                     # phi_0_mean = phi_0_mean,
-                                     # phi_0_sd   = phi_0_sd,
-                                     # phi_1_mean = phi_1_mean,
-                                     # phi_1_sd   = phi_1_sd)
+                                
   )
   }
 }

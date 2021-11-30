@@ -17,14 +17,9 @@ library(loo)
 
 # run post-process qPCR STAN Output.R to get base maps and some other items of interest.
 
-# Working directories
-base.dir <- "/Users/ole.shelton/Github/eDNA-Hake-public/"
-data.dir <- paste0(base.dir,"Data/acoustics 2019")
-script.dir <- paste0(base.dir,"/Scripts")
-plot.dir <- paste0(base.dir,"Plots and figures")
 
 setwd(data.dir)
-dat.acoustic.raw <- read.csv("EchoPro_un-kriged_output-05-Dec-2019_0.csv")
+dat.acoustic.raw <- read.csv("EchoPro_un-kriged_output_TRIMMED-05-Dec-2019_0.csv")
 
 ### WORK WITH THE ACOUSTIC DATA.
 dat.acoustic <- dat.acoustic.raw %>% 
@@ -65,13 +60,7 @@ dat.acoustic$trans_id <- paste0(dat.acoustic$transect,"_",dat.acoustic$ID)
 ####
 
 max.lon.by.trans <- dat.acoustic %>% group_by(transect) %>% summarise(max.lon=max(lon),max.lat=max(lat)) %>% mutate(near.coast=1)
-
 dat.acoustic <- dat.acoustic %>% left_join(.,max.lon.by.trans) %>% mutate(near.coast=ifelse(lon==max.lon,1,0))
-# There are two transects which have two locations that correspond to max.lon. (121,127) both are up in Canada,
-# So it doesn't really matter for our purposes.  But this is something to keep an eye on.
-# I drop 121 and 127 here to make it obvious something is amiss with them. 
-dat.acoustic <- dat.acoustic %>% filter(!transect %in% c(121,127))
-
 TRANS <- unique(dat.acoustic$transect)
 
 ### Pull in 5km grid and projection, convert lat-lon to that coordinate system.
