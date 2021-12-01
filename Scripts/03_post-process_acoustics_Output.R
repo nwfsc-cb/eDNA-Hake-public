@@ -15,27 +15,19 @@ library(ggsci)
 library(gridExtra)
 library(gtools)
 
-results.dir   <- "/Users/ole.shelton/Github/eDNA-Hake/Stan Model Fits"
-script.dir <- "/Users/ole.shelton/Github/eDNA-Hake/Scripts"
-plot.dir   <- "/Users/ole.shelton/Github/eDNA-Hake/Plots and figures"
+base.dir <- getwd()
+results.dir   <- paste0(base.dir,"/Stan Model Fits")
+script.dir <- paste0(base.dir,"/Scripts")
+plot.dir   <- paste0(base.dir,"/Plots and figures")
 # load and run in the acoustic data.
 setwd(script.dir)
 #source("process acoustic data.R")
-
 # get bathymetry data.
 # source("pull NOAA bathy for acoustic data.R")
 
 # Read in the output from the Stan model
-
 setwd(results.dir)
-
-# CHANGE THIS FOR switching between species.
-SPECIES <- "hake" # eulachon, hake 
-
-#load(paste("qPCR 2019",SPECIES, MOD, "7_12 Fitted.RData"))
 load("Acoustics 2019 lat.long.smooth 6_14_6_10_smooth_hurdle Base_Var Fitted.RData")
-
-#save(Output.qpcr,file=paste("qPCR 2019",SPECIES, MOD, "Fitted.RData"))
 
 # Read in agreed upon dat_raster_fin that has been trimmed to 
 dat_raster_fin <- readRDS(file="../Data/_projection_rds/dat_raster_fin.rds") 
@@ -47,7 +39,7 @@ load(file="../Data/lat_breaks_for_projections.RData")
 setwd(script.dir)
 source("summarize_stan_output_acoustics.R")
 
-#### MAKE OBSERRVED v. PREDICTION Plots
+#### MAKE OBSERVED v. PREDICTION Plots
 pred_obs_bin_p1 <- ggplot(pred_obs_bin) + 
                    geom_point(aes(x=Mean,y=bin_weight_dens),
                               position=position_jitter(width=0,height=0.1),alpha=0.5) +
@@ -73,7 +65,6 @@ pred_obs_pos_p2 <- ggplot(pred_obs_pos) +
 pred_obs_pos_resid <- ggplot(pred_obs_pos) + 
                       geom_point(aes(x=Mean,y=resid),alpha=0.5) +
   geom_smooth(aes(x=log(Mean),y=log(weight_dens_mt_km2))) +
-  #geom_abline(intercept=0,slope=1,color="red") +
   theme_bw()
 
 #### MAP MAKING COMMANDS
@@ -221,52 +212,6 @@ OPT = "plasma" # options are "viridis"(default), "magma", "plasma", "inferno"
   
   
   
-  ######################################################3
-  ## SD in Space
-  ######################################################3
-  # SIZE = 1.3
-  # STROKE = 0 
-  # 
-  # z.lim = c(0,1.25) 
-  # z.breaks <- seq(z.lim[1],z.lim[2],length.out=5)
-  # 
-  # DEPTH <- levels(STATION.DEPTH$depth_cat_factor)
-  # p_log_D_SD <- list()
-  # 
-  # D_pred_background <- D_pred_log_combined %>% filter(depth_cat_factor == 0)
-  # 
-  # for(i in 1:length(DEPTH)){
-  #   p_log_D_SD[[as.name(paste0("x_",DEPTH[i]))]] <-
-  #     base_map_trim +
-  #     geom_point(data= D_pred_background,
-  #                aes(x=lon,y=lat),size=SIZE,color=grey(0.6),alpha=1,stroke=STROKE) +
-  #     geom_point(data= D_pred_log_combined %>% filter(depth_cat_factor == DEPTH[i]),
-  #                aes(x=lon,y=lat,color=SD),alpha=1,size=SIZE,stroke=STROKE) +
-  #     geom_point(data= D_pred_log_combined %>% filter(SD > z.lim[2]),
-  #                aes(x=lon,y=lat),alpha=1,size=SIZE,stroke=STROKE,color=viridis(1,begin=0.999,end=1)) +
-  #     scale_color_viridis_c(option=OPT,limits=z.lim,breaks=z.breaks,labels=round(z.breaks,2),name=expression("SD DNA Copies L"^-1)) +
-  #     ggtitle(paste(DEPTH[i],"m")) +
-  #     theme_bw() 
-  #   
-  #   p_log_D_SD[[as.name(paste0("x_",DEPTH[i],"_dots"))]] <- 
-  #     p_log_D_SD[[as.name(paste0("x_",DEPTH[i]))]] +
-  #     geom_point(data=STATION.DEPTH %>% filter(depth_cat_factor == DEPTH[i]),aes(x=lon,y=lat),col="red")
-  # }  
-  # 
-  # SIZE = 1.25
-  # p_log_D_SD_facet <- base_map_trim +
-  #   # geom_point(data= D_pred_background,
-  #   #            aes(x=lon,y=lat),size=SIZE,color=grey(0.6),alpha=1,stroke=STROKE) +
-  #   geom_point(data= D_pred_log_combined ,
-  #              aes(x=lon,y=lat,color=SD),alpha=1,size=SIZE,stroke=STROKE) +
-  #   geom_point(data= D_pred_log_combined %>% filter(SD > z.lim[2]),
-  #              aes(x=lon,y=lat),alpha=1,size=SIZE,stroke=STROKE,color=viridis(1,begin=0.999,end=1)) +
-  #   scale_color_viridis_c(option=OPT,limits=z.lim,breaks=z.breaks,labels=round(z.breaks,2),name=expression("SD DNA Copies L"^-1)) +
-  #   facet_wrap(~depth_cat_factor) +
-  #   theme_bw() 
-
-
-  
   p_marginal_smooth <- list()
   if(MODEL.TYPE=="lat.long.smooth"){
       p_marginal_smooth[[as.name("bin_bottom_depth")]] <- ggplot(D_pred_bottom_depth_bin_combined) +
@@ -279,8 +224,6 @@ OPT = "plasma" # options are "viridis"(default), "magma", "plasma", "inferno"
         theme_bw()
   }
   
- 
-  
   #################### 
   ## Smoothes Only
   ###################
@@ -290,11 +233,9 @@ OPT = "plasma" # options are "viridis"(default), "magma", "plasma", "inferno"
    z.breaks <- log10(c(20,100,250,500,1000,2500))
    #z.lim.labs <- 10^z.breaks
    
-   
+ 
    SIZE = 1.3
    p_log_D_smoothes_only <- base_map_trim +
-     # geom_point(data= D_pred_background,
-     #            aes(x=lon,y=lat),size=SIZE,color=grey(0.6),alpha=1,stroke=STROKE) +
      geom_point(data= D_pred_smooth_pos_combined ,
                 aes(x=lon,y=lat,color=Mean),alpha=0.75,size=SIZE,stroke=STROKE) +
      geom_point(data= D_pred_smooth_pos_combined %>% filter(Mean < z.lim[1]),
@@ -337,46 +278,14 @@ quartz(file=paste("Hake Acoustics p_log_D lat_0.5_degree",MODEL.TYPE,"_",MODEL.V
   print(p_Acoustics_lat_0.5  )
 dev.off()
 
-
-
-# pdf(file=paste("Hake transect p_log_D_facet2",MODEL.TYPE,"_",MODEL.VAR,"_",MODEL.ID,".pdf"),onefile = T,height=6,width=11)
-#   print(p_log_D_facet2)
-# dev.off()
-
 #
 pdf(file=paste("Acoustics_marginal_smoothes_",MODEL.TYPE,"_",MODEL.VAR,"_",MODEL.ID,".pdf",sep=""),onefile = T,height=5,width=7)
   print(p_marginal_smooth)
 dev.off()
 
-
 pdf(file=paste("Acoustics_kappa_plot_",MODEL.TYPE,"_",MODEL.VAR,"_",MODEL.ID,".pdf",sep=""),onefile = T,height=3.5,width=5)
 print(kappa_plot)
 dev.off()
-
-
-# p_log_D
-# p_log_D_facet
-# p_log_D_SD
-# p_log_D_SD_facet
-# 
-# p_log_D_smoothes_only_facet
-
-# Latitudinal slices.
-# SP.transect.plots
-
-# Factors for each depth
-# depth_cat_plot
-
-# Variance parameters
-# sd_param_plots
-
-# Marginal Smoothes
-p_marginal_smooth
-
-# Residuals
-p_resid_facet
-
-# Contamination 
 
 ##############################################3
 # Save output (plots, data.frames) to file for comparison with the eDNA data.

@@ -15,9 +15,11 @@ library(ggsci)
 library(gridExtra)
 library(cowplot)
 
-script.dir <- "/Users/ole.shelton/Github/eDNA-Hake/Scripts"
-results.dir   <- "/Users/ole.shelton/Github/eDNA-Hake/Stan Model Fits"
-plot.dir   <- "/Users/ole.shelton/Github/eDNA-Hake/Plots and figures"
+
+base.dir <- getwd()
+results.dir   <- paste0(base.dir,"/Stan Model Fits")
+script.dir <- paste0(base.dir,"/Scripts")
+plot.dir   <- paste0(base.dir,"/Plots and figures")
 
 # load and run in the acoustic data.
 setwd(script.dir)
@@ -37,10 +39,7 @@ setwd(results.dir)
 SPECIES <- "hake" # eulachon, hake 
 # CHANGE THIS FOR switching among model output.
 MOD <-  "lat.long.smooth"
-
-#load(paste("qPCR 2019",SPECIES, MOD, "7_12 Fitted.RData"))
 load("qPCR 2019 hake lat.long.smooth 4_10_fix_nu_T-FIN Base_Var Fitted NO.SURFACE= FALSE .RData")
-#save(Output.qpcr,file=paste("qPCR 2019",SPECIES, MOD, "Fitted.RData"))
 
 ### Cacluate posterior summaries and predictive surfaces
 setwd(script.dir)
@@ -449,36 +448,6 @@ q3 <- base_map_trim +
   facet_wrap(~depth_cat,nrow=2)
 q3
 
-# 
-# p4 <- base_map_trim + 
-#   geom_point(data=SAMPLES %>% filter(inhibit==0),aes(x=lon,y=lat,size=Mean),shape=21,color="red") +
-#   geom_point(data=SAMPLES %>% filter(inhibit==1,Mean > lower.lim.inhibit),aes(x=lon,y=lat,size=Mean),shape=21,color="red") +
-#   scale_size("Copies / L",labels=LAB,breaks=LAB,range=c(0.01,10),limits=c(lower.lim,NA))+
-#   geom_point(data=SAMPLES %>% filter(inhibit==0,Mean<=lower.lim),aes(x=lon,y=lat),shape="x",size=1,color="black") +
-#   geom_point(data=SAMPLES %>% filter(inhibit==1,Mean<=lower.lim.inhibit),aes(x=lon,y=lat),shape="x",size=1,color="black") +
-#   scale_shape("Copies / L",solid=FALSE)+
-#   scale_color_viridis_d("Wash\nCategory",begin=0,end=0.8) +
-#   facet_wrap(~depth_cat,nrow=2)
-# p4
-
-# Plot that trims out only those spots shallower than 150m.
-# DEPTHS <- c(0,50)
-# 
-# p5 <- base_map_trim + 
-#   geom_point(data=SAMPLES %>% filter(depth_cat %in% c(0,50,100,150)),
-#              aes(x=lon,y=lat,size=Mean),shape=21,color="red") +
-#   geom_point(data=SAMPLES s%>% filter(depth_cat %in% c(0,50,100,150))
-#                ,aes(x=lon,y=lat,size=Mean),shape=21,color="red") +
-#   scale_size("Copies / L",labels=LAB,breaks=LAB,range=c(0.01,10),limits=c(lower.lim,NA))+
-#   geom_point(data=SAMPLES %>% filter(depth %in% c(0,50,100,150)) %>%
-#                filter(inhibit==0,Mean<=lower.lim),aes(x=lon,y=lat),shape="x",size=1,color="black") +
-#                filter(inhibit==1,Mean<=lower.lim.inhibit),aes(x=lon,y=lat),shape="x",size=1,color="black") +
-#   scale_shape("Copies / L",solid=FALSE)+
-#   scale_color_viridis_d("Wash\nCategory",begin=0,end=0.8) +
-#   facet_wrap(~depth_cat,nrow=1)
-# p5
-
-
 ######################################################3
 # Smooth projections.
 ######################################################3
@@ -774,167 +743,6 @@ for(i in 1:length(DEPTH)){
      facet_wrap(~depth_cat_factor) +
      theme_bw() 
 
-
-######################################################3
-######################################################3
-##### --------  Make Transect Cross-section plots.
-######################################################3
-######################################################3
-
-## OK.  I'm hoping this is a way of plotting he overlap between the eDNA 
-## and the acoustic data.
-
-# coast.ref.point <- dat.acoustic %>% filter(near.coast==1) %>% dplyr::select(transect, lat, lon,near.coast)
-# coast.ref.point$transect <- as.character(coast.ref.point$transect)
-# 
-# temp.all <- NULL
-# TRANS <-  sort(unique(STATION.DEPTH$transect))
-# for(i in 1:length(TRANS)){
-#   temp <- STATION.DEPTH %>% filter(transect == TRANS[i])
-#   ref  <- coast.ref.point %>%filter(transect == TRANS[i]) %>% dplyr::select(lon,lat)
-#   Disty <- distGeo(p1=as.matrix(data.frame(lon=temp$lon,lat=temp$lat)),p2=ref)
-#   Disty <- Disty / 1000
-#   temp <- temp %>% as.data.frame() %>% mutate(dist.km = Disty) %>% arrange(dist.km) %>% mutate(id.numb = 1:nrow(temp))
-#   temp.all <- bind_rows(temp.all,temp)
-# }
-# 
-# dat.SP      <- left_join(STATION.DEPTH,temp.all)
-# dat.SP.raw  <- left_join(SAMPLES,
-#                           temp.all %>% dplyr::select(station.depth,dist.km))
-#                            
-# 
-# dat.acoustic  <- dat.acoustic %>% mutate(mean.depth = ifelse(mean.depth.m==0,NA,mean.depth.m) )
-# dat.acoustic$transect <- as.character(dat.acoustic$transect)
-# 
-# dat.merge <- full_join(dat.SP %>% dplyr::select(transect,lat,lon,dist.km,depth,Mean) ,
-#                        dat.acoustic %>% dplyr::select(transect,lat,lon,dist.km,mean.depth,biomass_mt,layer.thickness))
-# dat.merge.raw <- full_join(dat.SP.raw %>% dplyr::select(transect,lat,lon,dist.km,depth,Mean) ,
-#                        dat.acoustic %>% dplyr::select(transect,lat,lon,dist.km,mean.depth,biomass_mt,layer.thickness))
-# 
-# SP.transect.plots <- list()
-# SP.transect.plots.raw <- list()
-# 
-# #################
-# ## OK. Make some plots
-# #################
-# if(SPECIES=="hake"){ 
-#   
-#   ALP.red =0.5
-#   ALP.blue = 0.3
-#   ALP.blue.line = 0.8
-#   
-#   lower.lim.copies = 20
-#   BREAK.copies = c(20,100,500,1000,2500,5000,7500,10000,20000,40000)
-#   BREAK.copies = c(20,100,500,1000,2500,5000)
-#   BREAK.copies.raw = c(20,100,500,1000,2500,5000,7500,10000,20000,40000)
-#   LAB.copies= BREAK.copies
-#   LAB.copies.raw= BREAK.copies.raw
-#   
-#   for(i in 1:length(TRANS)){
-#     nom <- as.name(paste0("Transect.",TRANS[i]))
-#     SP.transect.plots[[nom]] <- 
-#       ggplot(dat.merge%>% filter( transect== TRANS[i])) +
-#       geom_point(aes(x= dist.km, y=mean.depth,size=biomass_mt,shape="Biomass",color="Biomass"),alpha=ALP.blue.line) +  
-#       geom_point(aes(x= dist.km, y=depth,size=Mean,shape="Copies / L",color="Copies / L"),alpha=ALP.red) +
-#       geom_point(data=dat.merge %>% filter( transect== TRANS[i],Mean<lower.lim.copies),
-#                  aes(x= dist.km, y=depth),shape="x") +
-#       scale_size_continuous(name="Copies / L\nand\nBiomass (mt)",labels=LAB.copies,breaks=BREAK.copies,range=c(0.01,10),limits=c(lower.lim.copies,max(BREAK.copies))) +  
-#       # plot the bathymetry
-#       geom_polygon(data=bathy.transects %>% filter(transect==TRANS[i]),
-#                    aes(x=dist.km,y=-depth),fill="tan",alpha=ALP.red) +
-#       geom_ribbon(data=dat.acoustic %>% filter( transect== TRANS[i]),
-#                   aes(x=dist.km,
-#                       ymin=mean.depth - 0.5*layer.thickness,
-#                       ymax=mean.depth + 0.5*layer.thickness),fill="blue",alpha=ALP.blue)+
-#       scale_shape_manual("Type",values=c(21,16),labels=c("Biomass","Copies / L")) +
-#       scale_color_manual("Type",values=c("blue","red"),labels=c("Biomass","Copies / L")) +
-#       xlab("Distance from start of transect (km)") +
-#       ylab("Depth(m)") +
-#       ggtitle(paste0("Transect ",TRANS[i],"; Latitude ", 
-#                      dat.bathy %>% filter(transect==TRANS[i]) %>% dplyr::select(lat_Mean) %>% round(.,1) %>% .$lat_Mean)) +
-#       scale_y_reverse() +
-#       coord_cartesian(ylim=c(500,0))+
-#       scale_x_reverse() +
-#       theme_bw()
-#   }
-#   for(i in 1:length(TRANS)){
-#     nom <- as.name(paste0("Transect.",TRANS[i]))
-#     SP.transect.plots.raw[[nom]] <- 
-#       ggplot(dat.merge.raw %>% filter( transect== TRANS[i])) +
-#       geom_point(aes(x= dist.km, y=mean.depth,size=biomass_mt,shape="Biomass",color="Biomass"),alpha=ALP.blue.line) +  
-#       geom_point(aes(x= dist.km, y=depth,size=Mean,shape="Copies / L",color="Copies / L"),alpha=ALP.red) +
-#       geom_point(data=dat.merge %>% filter( transect== TRANS[i],Mean<lower.lim.copies),
-#                  aes(x= dist.km, y=depth),shape="x") +
-#       scale_size_continuous(name="Copies / L\nand\nBiomass (mt)",labels=LAB.copies.raw,
-#                             breaks=BREAK.copies.raw,range=c(0.01,10),
-#                             limits=c(lower.lim.copies,max(BREAK.copies.raw))) +  
-#       # plot the bathymetry
-#       geom_polygon(data=bathy.transects %>% filter(transect==TRANS[i]),
-#                    aes(x=dist.km,y=-depth),fill="tan",alpha=ALP.red) +
-#       geom_ribbon(data=dat.acoustic %>% filter( transect== TRANS[i]),
-#                   aes(x=dist.km,
-#                       ymin=mean.depth - 0.5*layer.thickness,
-#                       ymax=mean.depth + 0.5*layer.thickness),fill="blue",alpha=ALP.blue)+
-#       scale_shape_manual("Type",values=c(21,16),labels=c("Biomass","Copies / L")) +
-#       scale_color_manual("Type",values=c("blue","red"),labels=c("Biomass","Copies / L")) +
-#       xlab("Distance from start of transect (km)") +
-#       ylab("Depth(m)") +
-#       ggtitle(paste0("Transect ",TRANS[i],"; Latitude ", 
-#                      dat.bathy %>% filter(transect==TRANS[i]) %>% dplyr::select(lat_Mean) %>% round(.,1) %>% .$lat_Mean)) +
-#       scale_y_reverse() +
-#       coord_cartesian(ylim=c(500,0))+
-#       scale_x_reverse() +
-#       theme_bw()
-#   }
-#   
-#   setwd("../Plots and figures")
-#     pdf(file=paste("Hake transect profiles smoothed_",MODEL.TYPE,".pdf"),onefile = T,height=6,width=7)
-#     print(SP.transect.plots)
-#   dev.off()
-#   
-#   setwd("../Plots and figures")
-#     pdf(file=paste("Hake transect profiles raw_",MODEL.TYPE,".pdf"),onefile = T,height=6,width=7)
-#     print(SP.transect.plots.raw)
-#   dev.off()
-#   
-# }else{ #### THIS IS A SECTION FOR non-hake plots
-#   ALP.red =0.5
-#   ALP.blue = 0.3
-#   ALP.blue.line = 0.8
-#   
-#   lower.lim.copies = 20
-#   BREAK.copies = c(20,100,500,1000,2500,5000,7500,10000,20000,40000,100000,140000)
-#   LAB.copies= BREAK.copies
-#   
-#   for(i in 1:length(TRANS)){
-#     nom <- as.name(paste0("Transect.",TRANS[i]))
-#     SP.transect.plots[[nom]] <- 
-#       ggplot(dat.SP%>% filter( transect== TRANS[i])) +
-#       geom_point(aes(x= dist.km, y=depth,size=Mean),alpha=ALP.red,color="red",shape=16) +
-#       geom_point(data=dat.SP %>% filter( transect== TRANS[i],Mean<lower.lim.copies),
-#                  aes(x= dist.km, y=depth),shape="x") +
-#       scale_size_continuous(name="Copies / L",labels=LAB.copies,breaks=BREAK.copies,range=c(0.01,10),limits=c(lower.lim.copies,max(BREAK.copies))) +  
-#       # plot the bathymetry
-#       geom_polygon(data=bathy.transects %>% filter(transect==TRANS[i]),
-#                    aes(x=dist.km,y=-depth),fill="tan",alpha=ALP.red) +
-#       # scale_shape_manual("Copies / L",values=c(16),labels=c("Copies / L")) +
-#       # scale_color_manual("Copies / L",values=c("red"),labels=c("Copies / L")) +
-#       xlab("Distance from start of transect (km)") +
-#       ylab("Depth(m)") +
-#       ggtitle(paste0("Transect ",TRANS[i],"; Latitude ", 
-#                      dat.bathy %>% filter(transect==TRANS[i]) %>% dplyr::select(lat_Mean) %>% round(.,1) %>% .$lat_Mean)) +
-#       scale_y_reverse() +
-#       coord_cartesian(ylim=c(500,0))+
-#       scale_x_reverse() +
-#       theme_bw()
-#   }
-#   
-#   # setwd("../Plots and figures")
-#   # pdf(file=paste(SPECIES,"transect profiles.pdf"),onefile = T,height=6,width=7)
-#   # print(SP.transect.plots)
-#   # dev.off()
-#}
-
 ######################################################3
 ######################################################3
 ######################################################3
@@ -1004,6 +812,7 @@ marginal_est_D_by_depth <- ggplot(water_depth_marg) +
     #scale_y_continuous(trans="log2") +
     coord_flip() +
     theme_bw()
+
 # Key for water depth categories.
 # water.depth.cat %in% c("w_2000_plus","w_1200_2000","w_750_1200") ~ "1000+",
 # #water.depth.cat %in% c("w_750_1250") ~ "1000",
@@ -1018,119 +827,8 @@ marginal_est_D_by_depth <- ggplot(water_depth_marg) +
 
 
 
-
-
-# 
-#   
-#   coord_cartesian(ylim=c(500,0))+
-#   scale_x_reverse() +
-#   
- 
-# dat.SP.sum.by.depth.cat <- dat.SP %>% group_by(water.depth.cat.2,depth_cat) %>%
-#   summarise(N=length(Mean),MEAN=mean(Mean),SD=sd(Mean),
-#             MEDIAN=median(Mean),
-#             q.25=quantile(Mean,probs=0.25),
-#             q.75=quantile(Mean,probs=0.75))
-# 
-# MIN.bin <- 10
-# dat.SP <- dat.SP %>% mutate(Mean.binned = ifelse(Mean<=MIN.bin,MIN.bin,Mean))
-# LIM <- c(MIN.bin,max(dat.SP$Mean.binned))
-# 
-# depth.p2 <- ggplot(dat.SP) +
-#   geom_point(aes(x=depth,y=Mean.binned,group=station,color=lat),alpha=0.5) +
-#   geom_line(aes(x=depth,y=Mean.binned,group=station,color=lat),alpha=0.3) +
-#   geom_point(data= dat.SP.sum.by.depth.cat,
-#              aes(x=depth_cat,y=MEDIAN,group=water.depth.cat.2),color="red",shape=16,size=3) +
-#   geom_point(data= dat.SP.sum.by.depth.cat,
-#              aes(x=depth_cat,y=MEAN,group=water.depth.cat.2),color="red",shape=22,size=3) +
-#   geom_line(data= dat.SP.sum.by.depth.cat,
-#             aes(x=depth_cat,y=MEDIAN,group=water.depth.cat.2),color="red") +
-#   geom_errorbar(data= dat.SP.sum.by.depth.cat,
-#                 aes(x=depth_cat,ymin=q.25,ymax=q.75,group=water.depth.cat.2),color="red",width=0) +
-#   geom_hline(yintercept=20, linetype="dashed") +
-#   scale_color_viridis("Latitude",begin=0,end=0.8) +
-#   scale_x_reverse() +
-#   scale_y_continuous(limits=LIM,trans="log2") +
-#   scale_shape(solid=FALSE) +
-#   xlab("Depth") +
-#   ylab(expression("Copies L"^-1)) +
-#   coord_flip() +
-#   facet_wrap(~water.depth.cat.2,ncol=2)+
-#   theme_bw()
-# print(depth.p2)
-# 
-# 
-# # dat.SP.sum.by.depth.cat <- dat.SP.sum.by.depth.cat %>%
-# #                               mutate(max.depth.cat.fact=as.factor(max.depth.cat))
-# # LEV <- unique(dat.SP.sum.by.depth.cat$max.depth.cat.fact)
-# # 
-# # dat.SP.sum.by.depth.cat$max.depth.cat.fact <- factor(dat.SP.sum.by.depth.cat$max.depth.cat.fact,
-# #                                                        levels=LEV)
-# 
-# LIM <- c(0,max(dat.SP.sum.by.depth.cat$q.75)*1.05)
-# 
-# depth.p3 <- ggplot(dat.SP.sum.by.depth.cat) +
-#   geom_point(aes(x=-depth_cat,y=MEDIAN,color=water.depth.cat.2),
-#              shape=16,size=3,alpha=0.8) +
-#   # geom_point(aes(x=-depth_cat,y=MEAN,color=max.depth.cat.fact),
-#   #           shape=16,size=3) +
-#   geom_line(aes(x=-depth_cat,y=MEDIAN,color=water.depth.cat.2),alpha=0.6) + 
-#   geom_ribbon(aes(x=-depth_cat,ymin=q.25,ymax=q.75,fill=water.depth.cat.2),
-#               width=10,alpha=0.1) +
-#   scale_color_viridis_d("Water Depth \nCategory(m)",begin=0,end=0.8) +
-#   scale_fill_viridis_d("Water Depth \nCategory(m)",begin=0,end=0.8) +
-#   #scale_y_continuous(label=LABEL,breaks=LABEL) +
-#   scale_shape(solid=FALSE) +
-#   xlab("Depth") +
-#   ylab("Copies") +
-#   coord_flip() +
-#   scale_y_continuous(limits=LIM, expand=c(0,0)) +
-#   theme_bw()
-# print(depth.p3)
-# 
-# # depth.p4 <- depth.p3 +
-# #   scale_y_continuous(trans="log2",label=LABEL,breaks=LABEL,expand=c(0,0.05)) 
-# # 
-# # print(depth.p4)
-# 
-# #######################
-# 
-# # Make a north-south transect by water depth
-# 
-# lat.by.depth.dat <- dat.summary %>% group_by(transect,depth_cat) %>% 
-#   summarise(lat.mean = mean(lat), grand.mean = mean(Mean),grand.sd = sd(Mean))
-# lat.by.depth.dat$depth_cat <-as.factor(lat.by.depth.dat$depth_cat )
-# dat.summary2 <- dat.summary
-# dat.summary2$depth_cat <-as.factor(dat.summary2$depth_cat )
-# 
-# p.lat.by.d <- ggplot() +
-#   geom_point(data=lat.by.depth.dat,aes(y=grand.mean,x=lat.mean,color=depth_cat),alpha=0.5) +
-#   geom_line(data=lat.by.depth.dat,aes(y=grand.mean,x=lat.mean,color=depth_cat),alpha=0.5) +
-#   geom_point(data=dat.summary2,aes(y=Mean,x=lat,color=depth_cat),alpha=0.2) +
-#   scale_y_log10() +
-#   geom_hline(yintercept = 20,linetype="dashed",color="purple",alpha=0.5)+
-#   #geom_hline(yintercept = 100,linetype="dashed",color="blue",alpha=0.5)+
-#   theme_bw() +
-#   scale_color_discrete("Depth") +
-#   xlab("Latitude") +
-#   ylab(expression("DNA copies L"^"-1"))
-# 
-# p.lat.by.d.facet <- ggplot() +
-#   geom_point(data=lat.by.depth.dat,aes(y=grand.mean,x=lat.mean),alpha=0.5) +
-#   geom_line(data=lat.by.depth.dat,aes(y=grand.mean,x=lat.mean),alpha=0.5) +
-#   geom_point(data=dat.summary2,aes(y=Mean,x=lat),alpha=0.2) +
-#   scale_y_log10() +
-#   geom_hline(yintercept = 20,linetype="dashed",color="purple",alpha=0.5)+
-#   #geom_hline(yintercept = 100,linetype="dashed",color="blue",alpha=0.5)+
-#   theme_bw() +
-#   #scale_color_discrete("Depth")
-#   xlab("Latitude") +
-#   ylab(expression("DNA copies L"^"-1")) + facet_wrap(~depth_cat)
-
-
 #save output data to file.
 # These can be used to merge with acoustic datasets.
-
 
 # Combine the necessary data.frames into a list for use later.
 Output.summary.qpcr <- list(
